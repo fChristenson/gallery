@@ -50,6 +50,7 @@ var app = (function() {
 
   };
 
+  // helper to build the api query
   var getSearchUrl = function(queryString, page) {
 
     var url = context.strings.SEARCH_URL + '?text=' + queryString + '&';
@@ -73,6 +74,29 @@ var app = (function() {
 
   };
 
+  // function to make the initial call to flickr
+  var flickrSearch = function(queryString, page, callback) {
+
+    var url = getSearchUrl(queryString, page);
+    var xmlhttp =  new XMLHttpRequest();
+
+
+    xmlhttp.onreadystatechange = function () {
+
+      if (xmlhttp.readyState === context.doneState && xmlhttp.status === context.status.OK) {
+
+        return callback(JSON.parse(xmlhttp.responseText));
+
+      }
+
+    };
+
+    xmlhttp.open('GET', url, true);
+    xmlhttp.send();
+
+  };
+
+  // helper to search through the flickr res and find the images
   var findThumbnail = function(list) {
 
     var result = {};
@@ -103,28 +127,22 @@ var app = (function() {
 
   };
 
+  // helper to build the second req to flickr, this one gets the images
+  var getThumbnailUrl = function(imageId) {
 
-  var flickrSearch = function(queryString, page, callback) {
+    var url = 'https://api.flickr.com/services/rest/?';
 
-    var url = getSearchUrl(queryString, page);
-    var xmlhttp =  new XMLHttpRequest();
+    url += context.strings.API_KEY + '&';
+    url += context.strings.SIZE_METHOD + '&';
+    url += context.strings.NO_JSON_CALLBACK + '&';
+    url += context.strings.JSON_FORMAT + '&';
+    url += 'photo_id=' + imageId;
 
-
-    xmlhttp.onreadystatechange = function () {
-
-      if (xmlhttp.readyState === context.doneState && xmlhttp.status === context.status.OK) {
-
-        return callback(JSON.parse(xmlhttp.responseText));
-
-      }
-
-    };
-
-    xmlhttp.open('GET', url, true);
-    xmlhttp.send();
+    return url;
 
   };
 
+  // this get the actual images from flickr
   var getThumbnail = function(imageId, callback) {
 
     var url = getThumbnailUrl(imageId);
@@ -155,20 +173,7 @@ var app = (function() {
 
   };
 
-  var getThumbnailUrl = function(imageId) {
-
-    var url = 'https://api.flickr.com/services/rest/?';
-
-    url += context.strings.API_KEY + '&';
-    url += context.strings.SIZE_METHOD + '&';
-    url += context.strings.NO_JSON_CALLBACK + '&';
-    url += context.strings.JSON_FORMAT + '&';
-    url += 'photo_id=' + imageId;
-
-    return url;
-
-  };
-
+  // helper to set the selected page number in the menu
   var setSelectedPage = function(page) {
 
     var liArray = Array.prototype.slice.call(context.elements.PAGE_UL.children);
@@ -240,8 +245,7 @@ var app = (function() {
 
   };
 
-  // bit of a callback nesting going on here but in a real project I would use promises
-
+  // bit of a callback nesting going on here, promises would be nice here
    app.search = function(page, callback) {
 
     // save the search so pagination works
@@ -280,6 +284,7 @@ var app = (function() {
 
   };
 
+  // function to create the pageination menu
   app.createMenu = function() {
 
     var createLi = function(val) {
@@ -293,6 +298,7 @@ var app = (function() {
 
     };
 
+    // helper to update the numbers in the menu
     var updatePageNumbers = function(start) {
 
        var liArray = Array.prototype.slice.call(context.elements.PAGE_UL.children);
@@ -307,6 +313,7 @@ var app = (function() {
 
     };
 
+    // this is our general button function to get the images on the page of the provided number
     var getNumberButton = function(number) {
 
       var li = createLi(number);
@@ -384,6 +391,10 @@ var app = (function() {
 
     };
 
+    /*
+      Helper to check if we are at the end of our menu.
+      We want this so we know when its time to shift all the numbers to the next page ranges.
+    */
     var getLastLiNumber = function() {
 
       var liArray = context.elements.PAGE_UL.children;
@@ -392,6 +403,7 @@ var app = (function() {
 
     };
 
+    // check the comment for getLastLiNumber, same but for the first li number
     var getFirstLiNumber = function() {
 
       var liArray = context.elements.PAGE_UL.children;
@@ -463,6 +475,7 @@ var app = (function() {
 
     };
 
+    // now that all that helpers are defined we create the menu
     context.elements.PAGE_UL.appendChild(goToStartButton());
     context.elements.PAGE_UL.appendChild(previousButton());
 
