@@ -10,7 +10,7 @@
   <div class="fc-container">
     <header class="fc-color--blue fc-height--lg">
       <h1 id="fc-logo" class="fc-letter-spacing--xs fc-padding--xs fc-padding-left--md fc-text-color--white fc-float-left">Photos</h1>
-      <form class="fc-form fc-float-right fc-margin-top--sm fc-margin-right--md" onsubmit="search(null, addImages); return false;">
+      <form class="fc-form fc-float-right fc-margin-top--sm fc-margin-right--md" onsubmit="app.search(null, app.addImages); return false;">
         <input id="fc-form-input--search" tabindex="1" class="fc-padding--xs" autofocus placeholder="Search for photos" type="text" minlength="1" maxlength="255" required>
         <input class="fc-clickable fc-font-weight--bold fc-letter-spacing--xs fc-btn fc-text-color--white fc-color--red" type="submit" value="Seach">
       </form>
@@ -26,15 +26,6 @@
     </footer>
   </div>
   <!-- end of gallery -->
-  <script type="text/javascript" src="js/context.js"></script>
-  <script type="text/javascript" src="js/getSearchUrl.js"></script>
-  <script type="text/javascript" src="js/flickrSearch.js"></script>
-  <script type="text/javascript" src="js/findThumbnailUrl.js"></script>
-  <script type="text/javascript" src="js/getThumbnailUrl.js"></script>
-  <script type="text/javascript" src="js/getThumbnail.js"></script>
-  <script type="text/javascript" src="js/addImages.js"></script>
-  <script type="text/javascript" src="js/setSelectedPage.js"></script>
-  <script type="text/javascript" src="js/createPaginationMenu.js"></script>
-  <script type="text/javascript" src="js/search.js"></script>
+  <script type="text/javascript" src="js/galleryApp.js"></script>
 </body>
 </html>
