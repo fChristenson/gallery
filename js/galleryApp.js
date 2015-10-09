@@ -1,10 +1,6 @@
-var app = (function() {
-
-  var app = {};
-
+var app = {
   // using a central object to reference values keeps things nice and DRY
-  var context = {
-
+  context: {
     isLoading: false,
     lastSearch: null,
     maxPage: null,
@@ -44,25 +40,24 @@ var app = (function() {
     },
     getPageSizeQuery: function() {
 
-      return '&per_page=' + context.pageSize;
+      return '&per_page=' + this.pageSize;
 
     }
 
-  };
-
+  },
   // helper to build the api query
-  var getSearchUrl = function(queryString, page) {
+  getSearchUrl: function(queryString, page) {
 
-    var url = context.strings.SEARCH_URL + '?text=' + queryString + '&';
+    var url = this.context.strings.SEARCH_URL + '?text=' + queryString + '&';
 
-    url += context.strings.API_KEY + '&';
-    url += context.strings.SEARCH_METHOD + '&';
-    url += context.strings.JSON_FORMAT + '&';
-    url += context.strings.CONTENT_TYPE_PHOTO + '&';
-    url += context.strings.MEDIA_PHOTO + '&';
-    url += context.getPageSizeQuery() + '&';
-    url += context.strings.PRIVACY_PUBLIC + '&';
-    url += context.strings.NO_JSON_CALLBACK;
+    url += this.context.strings.API_KEY + '&';
+    url += this.context.strings.SEARCH_METHOD + '&';
+    url += this.context.strings.JSON_FORMAT + '&';
+    url += this.context.strings.CONTENT_TYPE_PHOTO + '&';
+    url += this.context.strings.MEDIA_PHOTO + '&';
+    url += this.context.getPageSizeQuery() + '&';
+    url += this.context.strings.PRIVACY_PUBLIC + '&';
+    url += this.context.strings.NO_JSON_CALLBACK;
 
     if(page && page > 0) {
 
@@ -72,18 +67,17 @@ var app = (function() {
 
     return url;
 
-  };
-
+  },
   // function to make the initial call to flickr
-  var flickrSearch = function(queryString, page, callback) {
+  flickrSearch: function(queryString, page, callback) {
 
-    var url = getSearchUrl(queryString, page);
+    var url = this.getSearchUrl(queryString, page);
     var xmlhttp =  new XMLHttpRequest();
-
+    var that = this;
 
     xmlhttp.onreadystatechange = function () {
 
-      if (xmlhttp.readyState === context.doneState && xmlhttp.status === context.status.OK) {
+      if (xmlhttp.readyState === that.context.doneState && xmlhttp.status === that.context.status.OK) {
 
         return callback(JSON.parse(xmlhttp.responseText));
 
@@ -94,10 +88,9 @@ var app = (function() {
     xmlhttp.open('GET', url, true);
     xmlhttp.send();
 
-  };
-
+  },
   // helper to search through the flickr res and find the images
-  var findThumbnail = function(list) {
+  findThumbnail: function(list) {
 
     var result = {};
 
@@ -125,40 +118,38 @@ var app = (function() {
 
     return result;
 
-  };
-
+  },
   // helper to build the second req to flickr, this one gets the images
-  var getThumbnailUrl = function(imageId) {
+  getThumbnailUrl: function(imageId) {
 
     var url = 'https://api.flickr.com/services/rest/?';
 
-    url += context.strings.API_KEY + '&';
-    url += context.strings.SIZE_METHOD + '&';
-    url += context.strings.NO_JSON_CALLBACK + '&';
-    url += context.strings.JSON_FORMAT + '&';
+    url += this.context.strings.API_KEY + '&';
+    url += this.context.strings.SIZE_METHOD + '&';
+    url += this.context.strings.NO_JSON_CALLBACK + '&';
+    url += this.context.strings.JSON_FORMAT + '&';
     url += 'photo_id=' + imageId;
 
     return url;
 
-  };
-
+  },
   // this get the actual images from flickr
-  var getThumbnail = function(imageId, callback) {
+  getThumbnail: function(imageId, callback) {
 
-    var url = getThumbnailUrl(imageId);
+    var url = this.getThumbnailUrl(imageId);
     var xmlhttp = new XMLHttpRequest();
-
+    var that = this;
 
     xmlhttp.onreadystatechange = function () {
 
-      if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+      if (xmlhttp.readyState === that.context.doneState && xmlhttp.status === that.context.status.OK) {
 
         var response = JSON.parse(xmlhttp.responseText);
         var image;
 
         if(response && response.sizes) {
 
-          image = findThumbnail(response.sizes.size);
+          image = that.findThumbnail(response.sizes.size);
 
         }
 
@@ -171,33 +162,33 @@ var app = (function() {
     xmlhttp.open('GET', url, true);
     xmlhttp.send();
 
-  };
-
+  },
   // helper to set the selected page number in the menu
-  var setSelectedPage = function(page) {
+  setSelectedPage: function(page) {
 
-    var liArray = Array.prototype.slice.call(context.elements.PAGE_UL.children);
+    var liArray = Array.prototype.slice.call(this.context.elements.PAGE_UL.children);
+    var that = this;
 
       liArray.forEach(function(li) {
 
         var a = li.children[0]; // get the a tag inside the li
         if(a.innerHTML == page) {
 
-          a.classList.add(context.strings.SELECTED);
+          a.classList.add(that.context.strings.SELECTED);
 
         } else {
 
-          a.classList.remove(context.strings.SELECTED);
+          a.classList.remove(that.context.strings.SELECTED);
 
         }
 
       });
 
-  };
+  },
+  addImages: function(imageArray) {
 
-  app.addImages = function(imageArray) {
-
-    context.imageArray.forEach(function(image) {
+    var that = this;
+    that.context.imageArray.forEach(function(image) {
 
       var li = document.createElement('li');
       var img = document.createElement('img');
@@ -209,70 +200,67 @@ var app = (function() {
       a.appendChild(img);
       li.appendChild(a);
 
-      context.elements.PHOTOS_UL.appendChild(li);
+      that.context.elements.PHOTOS_UL.appendChild(li);
 
     });
 
-  };
+  },
+  clearOldPhotos: function() {
 
-  var clearOldPhotos = function() {
-
-    context.imageArray = [];
-    var liArray = Array.prototype.slice.call(context.elements.PHOTOS_UL.children);
+    this.context.imageArray = [];
+    var liArray = Array.prototype.slice.call(this.context.elements.PHOTOS_UL.children);
 
       if (liArray && liArray.length > 0) {
 
+          var that = this;
           liArray.forEach(function(li) {
 
-              context.elements.PHOTOS_UL.removeChild(li);
+              that.context.elements.PHOTOS_UL.removeChild(li);
 
           });
 
       }
 
-  };
+  },
+  handleCompletedRequest: function(data, callback) {
 
-  var handleCompletedRequest = function(data, callback) {
+    if(this.context.imageArray.length === this.context.pageSize) {
 
-    if(context.imageArray.length === context.pageSize) {
-
-      context.elements.SEARCH_INPUT.value = ''; // reset input field
-      setSelectedPage(data.photos.page);
-      context.elements.LOADER.classList.remove(context.strings.LOAD);
-      callback(context.imageArray);
+      this.context.elements.SEARCH_INPUT.value = ''; // reset input field
+      this.setSelectedPage(data.photos.page);
+      this.context.elements.LOADER.classList.remove(this.context.strings.LOAD);
+      callback();
 
     }
 
-  };
-
+  },
   // bit of a callback nesting going on here, promises would be nice here
-   app.search = function(page, callback) {
+  search: function(page, callback) {
 
     // save the search so pagination works
-    if(context.elements.SEARCH_INPUT.value) {
+    if(this.context.elements.SEARCH_INPUT.value) {
 
-      context.lastSearch = context.elements.SEARCH_INPUT.value;
+      this.context.lastSearch = this.context.elements.SEARCH_INPUT.value;
 
     }
 
-     if (context.lastSearch) {
+     if (this.context.lastSearch) {
 
-        clearOldPhotos();
+        this.clearOldPhotos();
 
         // run a flickr search to get the photo id´s
-         context.elements.LOADER.classList.add(context.strings.LOAD);
-         flickrSearch(context.lastSearch, page, function(data) {
-
+         this.context.elements.LOADER.classList.add(this.context.strings.LOAD);
+         var that = this;
+         this.flickrSearch(this.context.lastSearch, page, function(data) {
           // get thumbnails
-
           data.photos.photo.forEach(function(photo) {
 
-            context.maxPage = data.photos.pages;
-            getThumbnail(photo.id, function(image) {
+            that.context.maxPage = data.photos.pages;
+            that.getThumbnail(photo.id, function(image) {
 
               image.title = photo.title;
-              context.imageArray.push(image);
-              handleCompletedRequest(data, callback);
+              that.context.imageArray.push(image);
+              that.handleCompletedRequest(data, callback);
 
             });
 
@@ -281,217 +269,214 @@ var app = (function() {
       });
 
    }
+  },
+  createLi: function(val) {
 
-  };
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.innerHTML = val;
+    a.href = '#';
+    li.appendChild(a);
+    return li;
 
+  },
+  // helper to update the numbers in the menu
+  updatePageNumbers: function(start) {
+
+     var liArray = Array.prototype.slice.call(this.context.elements.PAGE_UL.children);
+     // two first and two last are not number buttons
+     for(var i = 2; i < liArray.length - 2; i++) {
+
+      var a = liArray[i].children[0];
+      a.innerHTML = start;
+      start++;
+
+     }
+
+  },
+  // this is our general button function to get the images on the page of the provided number
+  getNumberButton: function(number) {
+
+    var li = this.createLi(number);
+    var that = this;
+    li.onclick = function() {
+
+      if(that.context.lastSearch && !that.context.IsLoading) {
+
+        that.context.lastPage = parseInt(li.children[0].innerHTML);
+        that.context.IsLoading = true;
+        that.search(that.context.lastPage, function(imageArray) {
+
+          that.addImages(imageArray);
+          that.setSelectedPage(that.context.lastPage);
+          that.context.IsLoading = false;
+
+        });
+
+      }
+
+    };
+
+    return li;
+
+  },
+  goToStartButton: function() {
+
+    var li = this.createLi('<<');
+    var that = this;
+    li.onclick = function() {
+
+      if(that.context.lastSearch && that.context.lastPage > 0 && !that.context.IsLoading) {
+
+        that.context.lastPage = 1;
+        that.context.IsLoading = true;
+        that.search(that.context.lastPage, function(imageArray) {
+
+          that.context.IsLoading = false;
+          that.updatePageNumbers(1);
+          that.addImages(imageArray);
+          that.setSelectedPage(that.context.lastPage);
+
+        });
+
+      }
+
+    };
+
+    return li;
+
+  },
+  goToLastPageButton: function() {
+
+    var li = this.createLi('>>');
+    var that = this;
+    li.onclick = function() {
+
+      if(that.context.lastSearch && !that.context.IsLoading && that.context.lastPage != that.context.maxPage) {
+
+        that.context.lastPage = that.context.maxPage;
+        that.context.IsLoading = true;
+        that.search(that.context.maxPage, function(imageArray) {
+
+          that.context.IsLoading = false;
+          that.updatePageNumbers(that.context.lastPage - (that.context.nPages -1));
+          that.addImages(imageArray);
+          that.setSelectedPage(that.context.lastPage);
+
+        });
+
+      }
+
+    };
+
+    return li;
+
+  },
+  /*
+    Helper to check if we are at the end of our menu.
+    We want this so we know when its time to shift all the numbers to the next page ranges.
+  */
+  getLastLiNumber: function() {
+
+    var liArray = this.context.elements.PAGE_UL.children;
+    var a = liArray[liArray.length - 3].children[0];
+    return parseInt(a.innerHTML);
+
+  },
+  // check the comment for getLastLiNumber, same but for the first li number
+  getFirstLiNumber: function() {
+
+    var liArray = this.context.elements.PAGE_UL.children;
+    var a = liArray[2].children[0];
+    return parseInt(a.innerHTML);
+
+  },
+  nextButton: function() {
+
+    var li = this.createLi('>');
+    var that = this;
+    li.onclick = function() {
+
+      if(that.context.lastSearch && !that.context.IsLoading && that.context.lastPage + 1 <= that.context.maxPage) {
+
+        that.context.lastPage = that.context.lastPage + 1;
+        that.context.IsLoading = true;
+
+        that.search(that.context.lastPage, function(imageArray) {
+          // if going forward pushes outside the menu range, update the menu
+          if (that.getLastLiNumber() < that.context.lastPage) {
+
+            that.updatePageNumbers(that.context.lastPage);
+            that.setSelectedPage(that.context.lastPage);
+
+          }
+
+          that.addImages(imageArray);
+          that.context.IsLoading = false;
+
+        });
+
+      }
+
+    };
+
+    return li;
+
+  },
+  previousButton: function() {
+
+    var li = this.createLi('<');
+    var that = this;
+    li.onclick = function() {
+
+      if(that.context.lastSearch && that.context.lastPage > 1 && !that.context.IsLoading) {
+
+        that.context.lastPage = that.context.lastPage - 1;
+        that.context.IsLoading = true;
+        that.search(that.context.lastPage, function(imageArray) {
+          // if going back pushes outside the menu range, update the menu
+          if (that.getFirstLiNumber() > that.context.lastPage) {
+
+            that.updatePageNumbers(that.context.lastPage - (that.context.nPages - 1));
+            that.setSelectedPage(that.context.lastPage);
+
+          }
+
+          that.addImages(imageArray);
+          that.context.IsLoading = false;
+
+        });
+
+      }
+
+    };
+
+    return li;
+
+  },
   // function to create the pageination menu
-  app.createMenu = function() {
-
-    var createLi = function(val) {
-
-      var li = document.createElement('li');
-      var a = document.createElement('a');
-      a.innerHTML = val;
-      a.href = '#';
-      li.appendChild(a);
-      return li;
-
-    };
-
-    // helper to update the numbers in the menu
-    var updatePageNumbers = function(start) {
-
-       var liArray = Array.prototype.slice.call(context.elements.PAGE_UL.children);
-       // two first and two last are not number buttons
-       for(var i = 2; i < liArray.length - 2; i++) {
-
-        var a = liArray[i].children[0];
-        a.innerHTML = start;
-        start++;
-
-       }
-
-    };
-
-    // this is our general button function to get the images on the page of the provided number
-    var getNumberButton = function(number) {
-
-      var li = createLi(number);
-      li.onclick = function() {
-
-        if(context.lastSearch && !context.IsLoading) {
-
-          context.lastPage = parseInt(li.children[0].innerHTML);
-          context.IsLoading = true;
-          app.search(context.lastPage, function(imageArray) {
-
-            app.addImages(imageArray);
-            setSelectedPage(context.lastPage);
-            context.IsLoading = false;
-
-          });
-
-        }
-
-      };
-
-      return li;
-
-    };
-
-    var goToStartButton = function() {
-
-      var li = createLi('<<');
-      li.onclick = function() {
-
-        if(context.lastSearch && context.lastPage > 0 && !context.IsLoading) {
-
-          context.lastPage = 1;
-          context.IsLoading = true;
-          app.search(context.lastPage, function(imageArray) {
-
-            context.IsLoading = false;
-            updatePageNumbers(1);
-            app.addImages(imageArray);
-            setSelectedPage(context.lastPage);
-
-          });
-
-        }
-
-      };
-
-      return li;
-
-    };
-
-    var goToLastPageButton = function() {
-
-      var li = createLi('>>');
-      li.onclick = function() {
-
-        if(context.lastSearch && !context.IsLoading && context.lastPage != context.maxPage) {
-
-          context.lastPage = context.maxPage;
-          context.IsLoading = true;
-          app.search(context.maxPage, function(imageArray) {
-
-            context.IsLoading = false;
-            updatePageNumbers(context.lastPage - (context.nPages -1));
-            app.addImages(imageArray);
-            setSelectedPage(context.lastPage);
-
-          });
-
-        }
-
-      };
-
-      return li;
-
-    };
-
-    /*
-      Helper to check if we are at the end of our menu.
-      We want this so we know when its time to shift all the numbers to the next page ranges.
-    */
-    var getLastLiNumber = function() {
-
-      var liArray = context.elements.PAGE_UL.children;
-      var a = liArray[liArray.length - 3].children[0];
-      return parseInt(a.innerHTML);
-
-    };
-
-    // check the comment for getLastLiNumber, same but for the first li number
-    var getFirstLiNumber = function() {
-
-      var liArray = context.elements.PAGE_UL.children;
-      var a = liArray[2].children[0];
-      return parseInt(a.innerHTML);
-
-    };
-
-    var nextButton = function() {
-
-      var li = createLi('>');
-      li.onclick = function() {
-
-        if(context.lastSearch && !context.IsLoading && context.lastPage + 1 <= context.maxPage) {
-
-          context.lastPage = context.lastPage + 1;
-          context.IsLoading = true;
-
-          app.search(context.lastPage, function(imageArray) {
-            // if going forward pushes outside the menu range, update the menu
-            if (getLastLiNumber() < context.lastPage) {
-
-              updatePageNumbers(context.lastPage);
-              setSelectedPage(context.lastPage);
-
-            }
-
-            app.addImages(imageArray);
-            context.IsLoading = false;
-
-          });
-
-        }
-
-      };
-
-      return li;
-
-    };
-
-    var previousButton = function() {
-
-      var li = createLi('<');
-      li.onclick = function() {
-
-        if(context.lastSearch && context.lastPage > 1 && !context.IsLoading) {
-
-          context.lastPage = context.lastPage - 1;
-          context.IsLoading = true;
-          app.search(context.lastPage, function(imageArray) {
-            // if going back pushes outside the menu range, update the menu
-            if (getFirstLiNumber() > context.lastPage) {
-
-              updatePageNumbers(context.lastPage - (context.nPages - 1));
-              setSelectedPage(context.lastPage);
-
-            }
-
-            app.addImages(imageArray);
-            context.IsLoading = false;
-
-          });
-
-        }
-
-      };
-
-      return li;
-
-    };
+  initUi: function() {
 
     // now that all that helpers are defined we create the menu
-    context.elements.PAGE_UL.appendChild(goToStartButton());
-    context.elements.PAGE_UL.appendChild(previousButton());
+    this.context.elements.PAGE_UL.appendChild(this.goToStartButton());
+    this.context.elements.PAGE_UL.appendChild(this.previousButton());
 
-    for (var i = 1; i <= context.nPages; i++) {
+    for (var i = 1; i <= this.context.nPages; i++) {
 
-      context.elements.PAGE_UL.appendChild(getNumberButton(i));
+      this.context.elements.PAGE_UL.appendChild(this.getNumberButton(i));
 
     }
 
-    context.elements.PAGE_UL.appendChild(nextButton());
-    context.elements.PAGE_UL.appendChild(goToLastPageButton());
+    this.context.elements.PAGE_UL.appendChild(this.nextButton());
+    this.context.elements.PAGE_UL.appendChild(this.goToLastPageButton());
 
-  };
+  },
+  init: function() {
 
-  app.createMenu();
-  return app;
+    this.initUi();
 
-})();
+  }
 
+};
+
+app.init();
